@@ -3,56 +3,80 @@ using System.Collections;
 
 public class EnemySpawner : MonoBehaviour
 {
-    public GameObject enemy1Prefab;  
-    public GameObject enemy2Prefab; 
-    public Transform cubicSpawnPoint;
-    public Transform quadraticSpawnPoint;
-    public Transform endPoint;
-    public float spawnInterval = 3f;
-    public float delayBetweenEnemies = 1f; // Delay in seconds
+    [Header("Enemy Prefabs")]
+    [SerializeField] private GameObject enemy1Prefab;
+    [SerializeField] private GameObject enemy2Prefab;
+
+    [Header("Spawn Points")]
+    [SerializeField] private Transform cubicSpawnPoint;
+    [SerializeField] private Transform quadraticSpawnPoint;
+    [SerializeField] private Transform endPoint;
+
+    [Header("Spawn Settings")]
+    [SerializeField] private float spawnInterval = 3f;
+    [SerializeField] private float delayBetweenEnemies = 1f; // Delay before spawning the second enemy
 
     private void Start()
     {
-        // Ensure the spawner is correctly set up
-        if (enemy1Prefab != null && enemy2Prefab != null && cubicSpawnPoint != null && quadraticSpawnPoint != null && endPoint != null)
+        // Validate required references before starting the spawner
+        if (AreReferencesAssigned())
         {
             InvokeRepeating(nameof(SpawnEnemy), 1f, spawnInterval);
         }
         else
         {
-            Debug.LogWarning("Some required fields are not assigned in the Inspector!");
+            Debug.LogWarning("Spawner setup is incomplete. Check if all required references are assigned.");
         }
+    }
+
+    private bool AreReferencesAssigned()
+    {
+        return enemy1Prefab != null && enemy2Prefab != null && cubicSpawnPoint != null
+               && quadraticSpawnPoint != null && endPoint != null;
     }
 
     private void SpawnEnemy()
     {
-        // Log to ensure this method is being triggered
-        Debug.Log("Spawning enemies");
+        Debug.Log("Spawning enemies...");
 
-        // Randomly select an enemy prefab to spawn at each spawn point
-        GameObject selectedEnemy1 = Random.Range(0, 2) == 0 ? enemy1Prefab : enemy2Prefab;
-        GameObject selectedEnemy2 = Random.Range(0, 2) == 0 ? enemy1Prefab : enemy2Prefab;
+        // Select a random enemy prefab for each spawn point
+        GameObject selectedEnemy1 = GetRandomEnemy();
+        GameObject selectedEnemy2 = GetRandomEnemy();
 
-        // Instantiate the first enemy at cubic spawn point
-        GameObject enemy1 = Instantiate(selectedEnemy1, cubicSpawnPoint.position, Quaternion.identity);
-        enemy1.GetComponent<EnemyBehavior>().startPoint = cubicSpawnPoint;
-        enemy1.GetComponent<EnemyBehavior>().endPoint = endPoint;
-        enemy1.GetComponent<EnemyBehavior>().useCubicLerp = true;
+        // Spawn first enemy at the cubic spawn point
+        SpawnAtPoint(selectedEnemy1, cubicSpawnPoint, true);
 
-        // Start coroutine to delay the spawning of the second enemy
+        // Spawn the second enemy after a delay
         StartCoroutine(SpawnSecondEnemy(selectedEnemy2));
     }
 
-    // Coroutine to spawn second enemy after delay
-    private IEnumerator SpawnSecondEnemy(GameObject selectedEnemy2)
+    private GameObject GetRandomEnemy()
     {
-        // Wait for the specified delay time
-        yield return new WaitForSeconds(delayBetweenEnemies);
+        return Random.Range(0, 2) == 0 ? enemy1Prefab : enemy2Prefab;
+    }
 
-        // Instantiate the second enemy at quadratic spawn point
-        GameObject enemy2 = Instantiate(selectedEnemy2, quadraticSpawnPoint.position, Quaternion.identity);
-        enemy2.GetComponent<EnemyBehavior>().startPoint = quadraticSpawnPoint;
-        enemy2.GetComponent<EnemyBehavior>().endPoint = endPoint;
-        enemy2.GetComponent<EnemyBehavior>().useCubicLerp = false;
+    private void SpawnAtPoint(GameObject enemyPrefab, Transform spawnPoint, bool useCubic)
+    {
+        if (enemyPrefab == null || spawnPoint == null) return;
+
+        GameObject enemy = Instantiate(enemyPrefab, spawnPoint.position, Quaternion.identity);
+        EnemyBehavior enemyBehavior = enemy.GetComponent<EnemyBehavior>();
+
+        if (enemyBehavior != null)
+        {
+            enemyBehavior.startPoint = spawnPoint;
+            enemyBehavior.endPoint = endPoint;
+            enemyBehavior.useCubicLerp = useCubic;
+        }
+        else
+        {
+            Debug.LogWarning("Spawned enemy does not have an EnemyBehavior component!");
+        }
+    }
+
+    private IEnumerator SpawnSecondEnemy(GameObject selectedEnemy)
+    {
+        yield return new WaitForSeconds(delayBetweenEnemies);
+        SpawnAtPoint(selectedEnemy, quadraticSpawnPoint, false);
     }
 }

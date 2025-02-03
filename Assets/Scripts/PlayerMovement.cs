@@ -27,7 +27,7 @@ public class PlayerMovement : MonoBehaviour
     {
         float moveX = Input.GetAxisRaw("Horizontal"); // Get horizontal input (A/D or arrow keys)
         float moveY = Input.GetAxisRaw("Vertical"); // Get vertical input (W/S or arrow keys)
-        
+
 
         input = new Vector2(moveX, moveY).normalized; // Normalize to prevent faster diagonal movement
     }

@@ -6,7 +6,7 @@ public class Projectile : MonoBehaviour
     [SerializeField] private float restartDistance = 1f; // Distance at which to restart the scene
     private Transform playerTransform; // Cached reference to the player's transform
 
-     private void Start()
+    private void Start()
     {
         // Find the player by tag and cache its transform
         GameObject player = GameObject.FindGameObjectWithTag("Player");

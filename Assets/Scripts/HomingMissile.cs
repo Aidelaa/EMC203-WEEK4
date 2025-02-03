@@ -1,11 +1,9 @@
 using UnityEngine;
-using UnityEngine.UI;  
-using TMPro; 
 
 public class HomingMissile : MonoBehaviour
 {
-    public float speed = 10f;
-    public float destroyDistance = 0.5f;
+    [SerializeField] private float speed = 10f;
+    [SerializeField] private float destroyDistance = 0.5f;
     private Transform target;
 
     public void SetTarget(Transform newTarget)
@@ -21,9 +19,18 @@ public class HomingMissile : MonoBehaviour
             return;
         }
 
+        // Move towards target
         transform.position = Vector3.MoveTowards(transform.position, target.position, speed * Time.deltaTime);
 
-        if ((transform.position - target.position).magnitude <= destroyDistance)
+        // Rotate towards target smoothly
+        Vector3 direction = target.position - transform.position;
+        if (direction != Vector3.zero)
+        {
+            transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(Vector3.forward, direction), Time.deltaTime * speed);
+        }
+
+        // Destroy target and missile if within range
+        if (Vector3.Distance(transform.position, target.position) <= destroyDistance)
         {
             Destroy(target.gameObject);
             Destroy(gameObject);

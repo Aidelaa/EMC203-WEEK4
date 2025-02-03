@@ -93,7 +93,7 @@ private void UpgradeBulletKillDistance()
             // Unlock homing missile by changing the turret's bullet type or enabling a new missile prefab
             if (turretBehavior != null)
             {
-                turretBehavior.canShootHomingMissile = true;  // Assuming you have this flag in your turret script
+                turretBehavior.canShootHomingMissile = true;  
             }
         }
         UpdateUI();
