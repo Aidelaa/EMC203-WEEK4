@@ -84,7 +84,7 @@ public class Turret : MonoBehaviour
         if (rb != null)
         {
             Vector2 fireDirection = (player.position - transform.position).normalized;
-            rb.velocity = fireDirection * projectileVelocity; // Apply velocity to the projectile
+            rb.linearVelocity = fireDirection * projectileVelocity; // Apply velocity to the projectile
         }
 
         lastShotTime = Time.time; // Update the cooldown timer
