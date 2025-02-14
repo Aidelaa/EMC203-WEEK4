@@ -1,45 +1,60 @@
 using UnityEngine;
-using UnityEngine.UI;
-using UnityEngine.SceneManagement;
-using TMPro; 
-
 
 public class EnemyBehavior : MonoBehaviour
 {
+    [Header("Path Points")]
     public Transform startPoint;
     public Transform endPoint;
-    public float speed = 2f;
-    public bool useCubicLerp;
-    private float t = 0f;
-    public int damage = 1;  
+    public Transform cubicControlPoint1;
+    public Transform cubicControlPoint2;
+    public Transform quadraticControlPoint;
 
-    private void OnTriggerEnter2D(Collider2D other)
-    {
-        // Assuming the turret is tagged as "Turret"
-        if (other.CompareTag("Turret"))
-        {
-            // Call TakeDamage method from GameManager to reduce HP
-            GameManager.Instance.TakeDamage(damage);
-            Destroy(gameObject);  // Destroy the enemy after it hits the turret
-        }
-    }
+    [Header("Enemy Properties")]
+    [SerializeField] private float speed = 2f;
+    [SerializeField] private int damage = 1;
+    [SerializeField] private bool useCubicLerp;
+
+    private float progress = 0f; // Tracks movement along the curve
 
     private void Update()
     {
-        t += Time.deltaTime * speed;
-        if (useCubicLerp)
-        {
-            transform.position = Vector3.Lerp(startPoint.position, endPoint.position, t * t * (3f - 2f * t));
-        }
-        else
-        {
-            transform.position = Vector3.Lerp(startPoint.position, endPoint.position, t * t);
-        }
+        MoveAlongPath();
+    }
 
-        if (t >= 1f)
+    private void MoveAlongPath()
+    {
+        progress = Mathf.Clamp01(progress + Time.deltaTime * speed); // Increment and clamp progress
+
+        transform.position = useCubicLerp
+            ? CalculateCubicBezier(progress)
+            : CalculateQuadraticBezier(progress);
+
+        if (progress >= 1f)
         {
-            GameManager.Instance.TakeDamage(1);
-            Destroy(gameObject);
+            OnReachEndPoint();
         }
+    }
+
+    private Vector3 CalculateQuadraticBezier(float t)
+    {
+        float oneMinusT = 1 - t;
+        return oneMinusT * oneMinusT * startPoint.position +
+               2 * oneMinusT * t * quadraticControlPoint.position +
+               t * t * endPoint.position;
+    }
+
+    private Vector3 CalculateCubicBezier(float t)
+    {
+        float oneMinusT = 1 - t;
+        return oneMinusT * oneMinusT * oneMinusT * startPoint.position +
+               3 * oneMinusT * oneMinusT * t * cubicControlPoint1.position +
+               3 * oneMinusT * t * t * cubicControlPoint2.position +
+               t * t * t * endPoint.position;
+    }
+
+    private void OnReachEndPoint()
+    {
+        GameManager.Instance.TakeDamage(damage);
+        Destroy(gameObject);
     }
 }
