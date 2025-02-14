@@ -12,42 +12,42 @@ public class EnemySpawner : MonoBehaviour
     [SerializeField] private Transform quadraticSpawnPoint;
     [SerializeField] private Transform endPoint;
 
+    [Header("Bezier Control Points")]
+    [SerializeField] private Transform cubicControlPoint1;
+    [SerializeField] private Transform cubicControlPoint2;
+    [SerializeField] private Transform quadraticControlPoint;
+
     [Header("Spawn Settings")]
     [SerializeField] private float spawnInterval = 3f;
-    [SerializeField] private float delayBetweenEnemies = 1f; // Delay before spawning the second enemy
+    [SerializeField] private float delayBetweenEnemies = 1f;
 
     private void Start()
     {
-        // Validate required references before starting the spawner
         if (AreReferencesAssigned())
         {
             InvokeRepeating(nameof(SpawnEnemy), 1f, spawnInterval);
         }
         else
         {
-            Debug.LogWarning("Spawner setup is incomplete. Check if all required references are assigned.");
+            Debug.LogWarning("Spawner setup is incomplete. Please assign all required references.");
         }
     }
 
     private bool AreReferencesAssigned()
     {
-        return enemy1Prefab != null && enemy2Prefab != null && cubicSpawnPoint != null
-               && quadraticSpawnPoint != null && endPoint != null;
+        return enemy1Prefab && enemy2Prefab && cubicSpawnPoint && quadraticSpawnPoint &&
+               endPoint && cubicControlPoint1 && cubicControlPoint2 && quadraticControlPoint;
     }
 
     private void SpawnEnemy()
     {
         Debug.Log("Spawning enemies...");
 
-        // Select a random enemy prefab for each spawn point
-        GameObject selectedEnemy1 = GetRandomEnemy();
-        GameObject selectedEnemy2 = GetRandomEnemy();
+        // Spawn first enemy with cubic Bezier path
+        SpawnAtPoint(GetRandomEnemy(), cubicSpawnPoint, true);
 
-        // Spawn first enemy at the cubic spawn point
-        SpawnAtPoint(selectedEnemy1, cubicSpawnPoint, true);
-
-        // Spawn the second enemy after a delay
-        StartCoroutine(SpawnSecondEnemy(selectedEnemy2));
+        // Spawn second enemy after delay with quadratic Bezier path
+        StartCoroutine(SpawnSecondEnemy());
     }
 
     private GameObject GetRandomEnemy()
@@ -67,16 +67,26 @@ public class EnemySpawner : MonoBehaviour
             enemyBehavior.startPoint = spawnPoint;
             enemyBehavior.endPoint = endPoint;
             enemyBehavior.useCubicLerp = useCubic;
+
+            if (useCubic)
+            {
+                enemyBehavior.cubicControlPoint1 = cubicControlPoint1;
+                enemyBehavior.cubicControlPoint2 = cubicControlPoint2;
+            }
+            else
+            {
+                enemyBehavior.quadraticControlPoint = quadraticControlPoint;
+            }
         }
         else
         {
-            Debug.LogWarning("Spawned enemy does not have an EnemyBehavior component!");
+            Debug.LogWarning("Spawned enemy lacks an EnemyBehavior component!");
         }
     }
 
-    private IEnumerator SpawnSecondEnemy(GameObject selectedEnemy)
+    private IEnumerator SpawnSecondEnemy()
     {
         yield return new WaitForSeconds(delayBetweenEnemies);
-        SpawnAtPoint(selectedEnemy, quadraticSpawnPoint, false);
+        SpawnAtPoint(GetRandomEnemy(), quadraticSpawnPoint, false);
     }
 }
